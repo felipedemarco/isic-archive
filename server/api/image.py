@@ -23,6 +23,8 @@ class ImageResource(Resource):
         self.route('POST', (':id', 'flag'), self.flag)
         self.route('POST', (':id', 'segment'), self.doSegmentation)
 
+        self.route('GET', (':id', 'segmentation', 'latest', 'thumbnail'), self.segmentationThumbnail)
+
 
     @describeRoute(
         Description('Return a list of lesion images.')
@@ -166,3 +168,66 @@ class ImageResource(Resource):
             raise RestException(e.message)
 
         return contour_feature
+
+
+    @describeRoute(Description(''))
+    @access.cookie
+    @access.public
+    @loadmodel(model='image', plugin='isic_archive', level=AccessType.READ)
+    def segmentationThumbnail(self, image, params):
+        from bson import ObjectId
+        real_image = self.model('image', 'isic_archive').find({
+            'baseParentId': ObjectId('55943cff9fc3c13155bcad5e'),
+            'name': image['name']}
+        )
+        assert real_image.count() == 1
+        image = real_image.next()
+        image_data = self.model('image', 'isic_archive').imageData(image)
+
+        import six
+        from PIL import Image as PIL_Image, ImageDraw as PIL_ImageDraw
+        from girder.constants import SortDir
+        import numpy
+        from ..models.segmentation_helpers.scikit import ScikitSegmentationHelper
+        from ..models.segmentation_helpers.opencv import OpenCVSegmentationHelper
+        segmentation = self.model('segmentation', 'isic_archive').find(
+            query={'imageId': image['_id']},
+            sort=[('created', SortDir.DESCENDING)]
+        ).next()
+
+        segmentation_coords = segmentation['lesionBoundary']['geometry']['coordinates'][0]
+
+        filtered_segmentation_coords = OpenCVSegmentationHelper._maskToContour(
+            OpenCVSegmentationHelper._binaryOpening(
+                ScikitSegmentationHelper._contourToMask(image_data, segmentation_coords).astype(numpy.uint8),
+                element_shape='circle',
+                element_radius=5
+            )
+        )
+
+        width = int(params.get('width', 256))
+
+
+        pil_image_data = PIL_Image.fromarray(image_data)
+        pil_draw = PIL_ImageDraw.Draw(pil_image_data)
+
+        pil_draw.line(
+            list(six.moves.map(tuple, segmentation_coords)),
+            fill=(255, 0, 0),
+            width=5
+        )
+        pil_draw.line(
+            list(six.moves.map(tuple, filtered_segmentation_coords)),
+            fill=(0, 255, 0),
+            width=5
+        )
+
+        output_image_data = six.BytesIO()
+        factor = pil_image_data.size[0] / float(width)
+        pil_image_data.resize((
+            int(pil_image_data.size[0] / factor),
+            int(pil_image_data.size[1] / factor)
+        )).save(output_image_data, format='jpeg')
+
+        cherrypy.response.headers['Content-Type'] = 'image/jpeg'
+        return output_image_data.getvalue

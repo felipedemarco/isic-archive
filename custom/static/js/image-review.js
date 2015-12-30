@@ -40,7 +40,8 @@ isic_app.controller('ApplicationController',
             $http.get(images_url).success(function (data) {
                 $scope.image_list = [];
                 data.forEach(function (image) {
-                    image.thumbnail = '/api/v1/image/' + image._id + '/thumbnail?width=768';
+                    //image.thumbnail = '/api/v1/image/' + image._id + '/thumbnail?width=768';
+                    image.thumbnail = '/api/v1/image/' + image._id + '/segmentation/latest/thumbnail?width=768';
 
                     image.diagnosis_strings = [];
                     [
