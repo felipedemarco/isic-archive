@@ -211,11 +211,11 @@ class ImageResource(Resource):
         pil_image_data = PIL_Image.fromarray(image_data)
         pil_draw = PIL_ImageDraw.Draw(pil_image_data)
 
-        pil_draw.line(
-            list(six.moves.map(tuple, segmentation_coords)),
-            fill=(255, 0, 0),
-            width=5
-        )
+        # pil_draw.line(
+        #     list(six.moves.map(tuple, segmentation_coords)),
+        #     fill=(255, 0, 0),
+        #     width=5
+        # )
         pil_draw.line(
             list(six.moves.map(tuple, filtered_segmentation_coords)),
             fill=(0, 255, 0),
