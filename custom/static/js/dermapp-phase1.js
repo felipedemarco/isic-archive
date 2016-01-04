@@ -93,7 +93,7 @@ derm_app.controller('SegmentationController', [
             };
             Segmentation.save({}, post_data, function() {
                 $scope.isSubmitting = false;
-                window.location.replace('/uda/task');
+                window.location.replace('/uda/task/p1a/568a8bb59fc3c10c9e178899');
             });
 
             $scope.isSubmitting = true;
