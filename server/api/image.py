@@ -175,13 +175,13 @@ class ImageResource(Resource):
     @access.public
     @loadmodel(model='image', plugin='isic_archive', level=AccessType.READ)
     def segmentationThumbnail(self, image, params):
-        from bson import ObjectId
-        real_image = self.model('image', 'isic_archive').find({
-            'baseParentId': ObjectId('55943cff9fc3c13155bcad5e'),
-            'name': image['name']}
-        )
-        assert real_image.count() == 1
-        image = real_image.next()
+        # from bson import ObjectId
+        # real_image = self.model('image', 'isic_archive').find({
+        #     'baseParentId': ObjectId('55943cff9fc3c13155bcad5e'),
+        #     'name': image['name']}
+        # )
+        # assert real_image.count() == 1
+        # image = real_image.next()
         image_data = self.model('image', 'isic_archive').imageData(image)
 
         import six
