@@ -75,7 +75,7 @@ class AnnotationResource(Resource):
                 'name': annotation['name'],
                 'studyId': annotation['meta']['studyId'],
                 'userId': annotation['meta']['userId'],
-                'segmentationId': annotation['meta']['segmentationId'],
+                'segmentationId': annotation['meta'].get('segmentationId'),
                 'imageId': annotation['meta']['imageId'],
                 # TODO: change to State enum and ensure it serializes
                 'state': 'complete' \
