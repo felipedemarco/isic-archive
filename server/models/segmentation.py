@@ -113,7 +113,7 @@ class Segmentation(Model):
             superpixels = ScikitSegmentationHelper.writeImage(
                 superpixels, 'png')
 
-        self.removeSuperpixels(segmentation)
+        # self.removeSuperpixels(segmentation)
 
         superpixels_file = self.model('upload').uploadFromFile(
             obj=superpixels,
