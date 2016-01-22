@@ -32,6 +32,8 @@ class AnnotationResource(Resource):
                paramType='query', required=False)
         .param('imageId', 'The ID of the image to filter by.',
                paramType='query', required=False)
+        .param('details', 'Include the full content of each annotation.',
+               paramType='query', required=False, enum=(True, False))
         .errorResponse()
     )
     @access.public
@@ -69,22 +71,45 @@ class AnnotationResource(Resource):
             image_item=image
         )
 
-        return list(
-            {
-                '_id': annotation['_id'],
-                'name': annotation['name'],
-                'studyId': annotation['meta']['studyId'],
-                'userId': annotation['meta']['userId'],
-                'segmentationId': annotation['meta'].get('segmentationId'),
-                'imageId': annotation['meta']['imageId'],
-                # TODO: change to State enum and ensure it serializes
-                'state': 'complete' \
-                         if annotation['meta']['stopTime'] is not None \
-                         else 'active'
-            }
-            for annotation in annotations
-        )
-
+        if not params.get('details') == 'true':
+            return list(
+                {
+                    '_id': annotation['_id'],
+                    'name': annotation['name'],
+                    'studyId': annotation['meta']['studyId'],
+                    'userId': annotation['meta']['userId'],
+                    'segmentationId': annotation['meta'].get('segmentationId'),
+                    'imageId': annotation['meta']['imageId'],
+                    # TODO: change to State enum and ensure it serializes
+                    'state': 'complete' \
+                             if annotation['meta'].get('stopTime') is not None \
+                             else 'active'
+                }
+                for annotation in annotations
+            )
+        else:
+            return_list = list()
+            for annotation in annotations:
+                return_dict = {
+                    '_id': annotation['_id'],
+                    'name': annotation['name']
+                }
+                return_dict.update(annotation['meta'])
+                userSummaryFields = ['_id', 'login', 'firstName', 'lastName']
+                return_dict['user'] = self.model('user').load(
+                    return_dict.pop('userId'),
+                    force=True, exc=True,
+                    fields=userSummaryFields)
+                # Deal with a bug in Girder
+                # TODO: Remove this
+                import six
+                return_dict['user'] = {
+                    k: v
+                    for k, v in six.viewitems(return_dict['user'])
+                    if k in userSummaryFields
+                }
+                return_list.append(return_dict)
+            return return_list
 
     @describeRoute(
         Description('Get annotation details.')
