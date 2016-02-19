@@ -55,7 +55,8 @@ function _navigateToCollection(collectionName, replace) {
 
 girder.router.route('isic-studies', 'isic-studies', function () {
     'use strict';
-    _navigateToCollection('Annotation Studies', true);
+    window.location.replace('/multirater/index.html');
+    //_navigateToCollection('Annotation Studies', true);
 });
 
 girder.router.route('isic-tasks', 'isic-tasks', function () {
